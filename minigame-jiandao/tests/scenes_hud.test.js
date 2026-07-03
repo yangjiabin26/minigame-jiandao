@@ -24,6 +24,11 @@ test('update/tap 路由到当前场景', () => {
   assert.deepStrictEqual(tapped, [5, 6]);
 });
 
+test('go 未注册场景抛出带场景名的错误', () => {
+  const sm = createSceneManager();
+  assert.throws(() => sm.go('nope'), /未注册的场景: nope/);
+});
+
 test('hitButton 矩形命中', () => {
   const btns = [{ id: 'ok', x: 100, y: 200, w: 80, h: 40 }];
   assert.strictEqual(hitButton(btns, 140, 220), 'ok');
