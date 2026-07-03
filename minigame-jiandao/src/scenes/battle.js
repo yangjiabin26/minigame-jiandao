@@ -30,6 +30,16 @@ function createBattleScene(deps) {
   const { platform, gs, input, view, go } = deps;
   let s = null; // 每次 enter 重建的局内状态
 
+  function reviveLabel() {
+    if (s.reviveUsed) return '本关已复活过';
+    if (s.reviveFailed) return '广告暂不可用';
+    if (!platform.ads.available()) return '本关不可复活';
+    return '看视频原地复活';
+  }
+  function reviveEnabled() {
+    return !s.reviveUsed && !s.adBusy && !s.reviveFailed && platform.ads.available();
+  }
+
   function spawnAll(cfg) {
     const list = cfg.spawns.map((sp) => createEnemy(sp.type, sp.x, sp.y));
     if (cfg.boss) list.push(createBoss(cfg.boss, cfg.w / 2, 250));
@@ -55,12 +65,13 @@ function createBattleScene(deps) {
         projectiles: createProjectiles(),
         pickups: createPickups(),
         camera: createCamera(view.w, view.h),
-        earned: 0, reviveUsed: false, phase: 'playing', adBusy: false,
+        earned: 0, reviveUsed: false, reviveFailed: false, phase: 'playing', adBusy: false,
         deadButtons: [
           { id: 'revive', x: view.w / 2 - 110, y: view.h / 2, w: 220, h: 52 },
           { id: 'giveup', x: view.w / 2 - 110, y: view.h / 2 + 70, w: 220, h: 44 },
         ],
       };
+      input.reset();
       platform.recorder.start();
     },
     exit() { platform.recorder.stop(); s = null; },
@@ -134,10 +145,11 @@ function createBattleScene(deps) {
       s.camera.follow(player.x, player.y, cfg.w, cfg.h);
       s.camera.update(dt);
 
-      if (player.dead) { s.phase = 'dead'; platform.audio.play('die'); return; }
+      if (player.dead) { s.phase = 'dead'; input.reset(); platform.audio.play('die'); return; }
       if (s.level.atExit(player)) {
         s.phase = 'cleared';
         gs.unlockNext(s.levelIndex + 1);
+        s.earned += cfg.reward; gs.addCoins(cfg.reward);
         go('result', { levelIndex: s.levelIndex, earned: s.earned, isBoss: !!cfg.boss });
       }
     },
@@ -145,7 +157,7 @@ function createBattleScene(deps) {
     onTap(x, y) {
       if (!s || s.phase !== 'dead' || s.adBusy) return;
       const id = hud.hitButton(s.deadButtons, x, y);
-      if (id === 'revive' && !s.reviveUsed) {
+      if (id === 'revive' && !s.reviveUsed && platform.ads.available()) {
         s.adBusy = true;
         tryRevive(platform.ads, s.reviveUsed).then((r) => {
           s.adBusy = false;
@@ -153,9 +165,11 @@ function createBattleScene(deps) {
             s.reviveUsed = true;
             s.player.dead = false; s.player.hp = s.player.maxHp; s.player.invulnT = 1.5;
             s.phase = 'playing';
+          } else if (r === 'failed') {
+            s.reviveFailed = true;
           }
-          // 'failed'/'unavailable'：停留在死亡界面，玩家可选放弃
-        });
+          // 'unavailable'：停留在死亡界面，玩家可选放弃
+        }).catch(() => { s.adBusy = false; s.reviveFailed = true; });
       } else if (id === 'giveup') {
         go('levelselect');
       }
@@ -228,7 +242,7 @@ function createBattleScene(deps) {
       if (s.phase === 'dead') {
         ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, 0, view.w, view.h);
         hud.drawTextC(ctx, '你阵亡了', view.w / 2, view.h / 2 - 70, 28, '#e74c3c');
-        hud.drawBtn(ctx, s.deadButtons[0], s.reviveUsed ? '本关已复活过' : '看视频原地复活', !s.reviveUsed && !s.adBusy);
+        hud.drawBtn(ctx, s.deadButtons[0], reviveLabel(), reviveEnabled());
         hud.drawBtn(ctx, s.deadButtons[1], '返回选关', !s.adBusy);
       }
     },

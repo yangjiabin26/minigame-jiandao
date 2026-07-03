@@ -11,7 +11,9 @@ function createMockPlatform(opts = {}) {
     },
     ads: {
       adResult: opts.adResult !== undefined ? opts.adResult : true,
+      adAvailable: opts.adAvailable !== undefined ? opts.adAvailable : true,
       showRewarded() { return Promise.resolve(this.adResult); },
+      available() { return this.adAvailable; },
     },
     share() {},
     audio: { play() {}, stopAll() {} },

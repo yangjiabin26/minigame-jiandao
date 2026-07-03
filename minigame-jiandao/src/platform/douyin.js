@@ -4,7 +4,7 @@ function mapTouches(e) {
   return (e.touches.length ? Array.from(e.touches) : Array.from(e.changedTouches))
     .map((t) => ({ id: t.identifier, x: t.clientX, y: t.clientY }));
 }
-function mapEnded(e) {
+function mapChanged(e) {
   return Array.from(e.changedTouches).map((t) => ({ id: t.identifier, x: t.clientX, y: t.clientY }));
 }
 
@@ -21,15 +21,20 @@ function createDouyinPlatform() {
       set(k, v) { try { tt.setStorageSync(k, v); } catch (e) {} },
     },
     ads: {
+      available() { return !!AD_UNIT_REWARDED; },
       showRewarded() {
         if (!AD_UNIT_REWARDED) return Promise.resolve(false);
         return new Promise((resolve) => {
-          if (!rewarded) rewarded = tt.createRewardedVideoAd({ adUnitId: AD_UNIT_REWARDED });
-          const onClose = (res) => { rewarded.offClose(onClose); resolve(!!(res && res.isEnded)); };
-          rewarded.onClose(onClose);
-          rewarded.show().catch(() =>
-            rewarded.load().then(() => rewarded.show()).catch(() => { rewarded.offClose(onClose); resolve(false); })
-          );
+          try {
+            if (!rewarded) rewarded = tt.createRewardedVideoAd({ adUnitId: AD_UNIT_REWARDED });
+            const onClose = (res) => { rewarded.offClose(onClose); resolve(!!(res && res.isEnded)); };
+            rewarded.onClose(onClose);
+            try {
+              rewarded.show().catch(() =>
+                rewarded.load().then(() => rewarded.show()).catch(() => { rewarded.offClose(onClose); resolve(false); })
+              );
+            } catch (e) { rewarded.offClose(onClose); resolve(false); }
+          } catch (e) { resolve(false); }
         });
       },
     },
@@ -51,9 +56,9 @@ function createDouyinPlatform() {
     },
     onError(cb) { tt.onError(cb); },
     touch: {
-      onStart(cb) { tt.onTouchStart((e) => cb(mapTouches(e))); },
+      onStart(cb) { tt.onTouchStart((e) => cb(mapChanged(e))); },
       onMove(cb) { tt.onTouchMove((e) => cb(mapTouches(e))); },
-      onEnd(cb) { tt.onTouchEnd((e) => cb(mapEnded(e))); },
+      onEnd(cb) { tt.onTouchEnd((e) => cb(mapChanged(e))); },
     },
   };
 }

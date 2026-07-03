@@ -21,6 +21,13 @@ test('mock 广告可配置成功/失败', async () => {
   assert.strictEqual(await p.ads.showRewarded(), false);
 });
 
+test('mock 广告可用性默认 true，可配置为不可用', () => {
+  const p1 = createMockPlatform();
+  assert.strictEqual(p1.ads.available(), true);
+  const p2 = createMockPlatform({ adAvailable: false });
+  assert.strictEqual(p2.ads.available(), false);
+});
+
 test('mock 触摸事件分发', () => {
   const p = createMockPlatform();
   let got = null;
