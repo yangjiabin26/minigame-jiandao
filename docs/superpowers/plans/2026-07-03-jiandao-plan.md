@@ -1556,9 +1556,11 @@ test('弓箭手贴脸时后退拉开距离', () => {
 test('盾兵正面免伤、背后受伤', () => {
   const en = createEnemy('shield', 100, 100);
   en.facing = 0; // 朝右
-  assert.ok(!en.takeHit(10, 0, 0, 0));            // 从右侧打（攻击来向 π，即攻击者在正面）
+  // 攻击者在盾兵右侧（正面），攻击向左飞行：hitDir = π → 格挡
+  assert.ok(!en.takeHit(10, 0, 0, Math.PI));
   assert.strictEqual(en.hp, ENEMIES.shield.hp);
-  assert.ok(en.takeHit(10, 0, 0, Math.PI));       // 从左侧（背后）打
+  // 攻击者在盾兵左侧（背后），攻击向右飞行：hitDir = 0 → 受伤
+  assert.ok(en.takeHit(10, 0, 0, 0));
   assert.strictEqual(en.hp, ENEMIES.shield.hp - 10);
 });
 
