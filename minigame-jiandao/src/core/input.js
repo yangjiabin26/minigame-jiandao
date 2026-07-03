@@ -41,6 +41,7 @@ function createInput(w, h) {
       for (const t of touches) if (t.id === joy.id) resetJoy();
     },
     consume() { const e = events; events = []; return e; },
+    reset() { resetJoy(); events = []; },
   };
 }
 

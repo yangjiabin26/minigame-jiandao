@@ -47,3 +47,15 @@ test('双指：摇杆手指不受按钮手指干扰', () => {
   inp.onEnd([{ id: 2, x: 375 - 70, y: 667 - 90 }]);
   assert.ok(inp.joy.active); // 摇杆手指还在
 });
+
+test('reset() 清空摇杆状态与待消费事件', () => {
+  const inp = createInput(375, 667);
+  inp.onStart([{ id: 1, x: 100, y: 400 }]);
+  inp.onMove([{ id: 1, x: 160, y: 400 }]);
+  inp.onStart([{ id: 2, x: 375 - 70, y: 667 - 90 }]); // attack event queued
+  assert.ok(inp.joy.active);
+  inp.reset();
+  assert.ok(!inp.joy.active);
+  assert.strictEqual(inp.joy.mag, 0);
+  assert.deepStrictEqual(inp.consume(), []);
+});
