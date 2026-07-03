@@ -20,9 +20,10 @@ function createEnemy(type, x, y) {
 
   if (type === 'shield') {
     const baseTakeHit = en.takeHit;
-    // hitDir: 攻击来向（相对盾兵的方位）。coming from facing方向时格挡。
+    // hitDir: 攻击飞行方向（攻击者朝向）。攻击者位于 facing 前方时格挡。
     en.takeHit = (dmg, kx, ky, hitDir = en.facing + Math.PI) => {
-      if (Math.abs(angleDiff(hitDir, en.facing)) <= cfg.guardAngle / 2) return false;
+      const fromDir = hitDir + Math.PI; // 攻击者相对盾兵的方位
+      if (Math.abs(angleDiff(fromDir, en.facing)) <= cfg.guardAngle / 2) return false;
       return baseTakeHit(dmg, kx, ky);
     };
   }
