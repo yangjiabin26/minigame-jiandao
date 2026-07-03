@@ -65,3 +65,19 @@ test('改动即持久化：重建实例数据仍在', () => {
   const gs2 = createGameState(createStore(adapter));
   assert.strictEqual(gs2.data.coins, 77);
 });
+
+test('setPendingHalf 持久化跨实例，buyUpgrade 消费后清空并半价扣款', () => {
+  const adapter = memAdapter();
+  const gs1 = createGameState(createStore(adapter));
+  gs1.setPendingHalf(true);
+  const gs2 = createGameState(createStore(adapter));
+  assert.strictEqual(gs2.data.pendingHalf, true);
+  gs2.addCoins(upgradeCost('weapon', 0)); // 全价份额，半价应该够用且有剩余
+  const before = gs2.data.coins;
+  assert.ok(gs2.buyUpgrade('weapon', false));
+  const halfCost = Math.ceil(upgradeCost('weapon', 0) / 2);
+  assert.strictEqual(gs2.data.coins, before - halfCost);
+  assert.strictEqual(gs2.data.pendingHalf, false);
+  const gs3 = createGameState(createStore(adapter));
+  assert.strictEqual(gs3.data.pendingHalf, false);
+});

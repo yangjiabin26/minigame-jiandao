@@ -17,9 +17,14 @@ function createGameState(store) {
     },
     buyUpgrade(line, halfPrice = false) {
       if (s.upgrades[line] >= LINES[line].max) return false;
-      if (!api.spend(api.costOf(line, halfPrice))) return false;
-      s.upgrades[line] += 1; api.save(); return true;
+      const usePendingHalf = !!s.pendingHalf;
+      const effectiveHalf = halfPrice || usePendingHalf;
+      if (!api.spend(api.costOf(line, effectiveHalf))) return false;
+      s.upgrades[line] += 1;
+      if (usePendingHalf) s.pendingHalf = false;
+      api.save(); return true;
     },
+    setPendingHalf(v) { s.pendingHalf = v; api.save(); },
     unlockNext(clearedLevel) {
       if (clearedLevel >= s.unlocked && s.unlocked < 8) { s.unlocked = clearedLevel + 1; api.save(); }
     },

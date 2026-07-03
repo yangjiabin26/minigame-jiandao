@@ -8,6 +8,7 @@ function defaultState() {
     upgrades: { weapon: 0, armor: 0, dash: 0 },
     unlocked: 1, // 已解锁的最大关卡号（1-8）
     discount: { date: '', used: 0 }, // 铁匠铺半价：每日 3 次
+    pendingHalf: false, // 看视频获得的半价资格，跨场景持久化直到消费
   };
 }
 

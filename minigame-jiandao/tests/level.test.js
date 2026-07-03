@@ -45,3 +45,11 @@ test('门没开时 atExit 恒为 false', () => {
   ls.noteSpawn(1);
   assert.ok(!ls.atExit({ x: LEVELS[0].exit.x, y: LEVELS[0].exit.y, r: 13 }));
 });
+
+test('每关都有通关奖励，Boss 关（第4、8关）奖励不低于40', () => {
+  for (const [i, l] of LEVELS.entries()) {
+    assert.ok(l.reward > 0, `L${i + 1} reward`);
+  }
+  assert.ok(LEVELS[3].reward >= 40);
+  assert.ok(LEVELS[7].reward >= 40);
+});
