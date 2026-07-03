@@ -31,15 +31,14 @@
 
   // 把 mock 注入 platform/index 的缓存，让 main.js 拿到带 canvas 的实例
   const platformIndex = load('src/platform/index.js');
-  const orig = platformIndex.getPlatform;
   platformIndex.getPlatform = () => platform;
 
   // 键盘 → 触摸模拟
   const keys = {};
   const JOY_ID = 100, BASE = { x: 90, y: 500 };
   function joyTouch() {
-    let dx = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
-    let dy = (keys.s ? 1 : 0) - (keys.w ? 1 : 0);
+    const dx = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
+    const dy = (keys.s ? 1 : 0) - (keys.w ? 1 : 0);
     return { id: JOY_ID, x: BASE.x + dx * 60, y: BASE.y + dy * 60 };
   }
   let joyActive = false;

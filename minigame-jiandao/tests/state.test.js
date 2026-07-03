@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { createGameState } = require('../src/state');
-const { createStore, SAVE_KEY } = require('../src/core/storage');
+const { createStore } = require('../src/core/storage');
 const { upgradeCost } = require('../src/data/upgrades');
 
 function memAdapter() {

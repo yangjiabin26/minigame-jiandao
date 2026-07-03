@@ -24,8 +24,7 @@ function createResultScene(deps) {
         s.adBusy = true;
         tryDouble(platform.ads, s.earned).then((total) => {
           s.adBusy = false;
-          if (total > s.earned) { gs.addCoins(total - s.earned); s.earned = total; s.doubled = true; }
-          else { s.adFailed = true; }
+          if (total > s.earned) { gs.addCoins(total - s.earned); s.earned = total; s.doubled = true; } else { s.adFailed = true; }
         }).catch(() => { s.adBusy = false; s.adFailed = true; });
       } else if (id === 'share' && s.isBoss) {
         platform.share({ title: '我在《剑道》击败了Boss，第' + (s.levelIndex + 1) + '关通关！', desc: '来试试你的剑道' });

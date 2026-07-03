@@ -5,7 +5,7 @@ const { createBoss } = require('../src/entities/boss');
 function world(px, py) {
   const shots = [];
   return { player: { x: px, y: py, r: 13, dead: false }, walls: [], mapW: 800, mapH: 1000,
-           shoot(x, y, dir, dmg, speed) { shots.push({ dir }); }, shots };
+    shoot(x, y, dir, dmg, speed) { shots.push({ dir }); }, shots };
 }
 function step(b, w, t) { for (let i = 0; i < Math.round(t / (1 / 60)); i++) b.update(1 / 60, w); }
 

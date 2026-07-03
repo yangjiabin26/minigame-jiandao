@@ -39,8 +39,7 @@ function createMenuScene(deps) {
         adBusy = true;
         tryDiscount(platform.ads, gs, today()).then((ok) => {
           adBusy = false;
-          if (ok) { gs.setPendingHalf(true); discountFailed = false; }
-          else { discountFailed = true; }
+          if (ok) { gs.setPendingHalf(true); discountFailed = false; } else { discountFailed = true; }
         }).catch(() => { adBusy = false; discountFailed = true; });
         return;
       }
@@ -66,10 +65,7 @@ function createMenuScene(deps) {
       const left = gs.discountLeft(today());
       const adOk = platform.ads.available();
       let label, enabled;
-      if (halfNext) { label = '下次升级半价已激活'; enabled = false; }
-      else if (!adOk) { label = '广告暂不可用'; enabled = false; }
-      else if (discountFailed) { label = '广告暂不可用'; enabled = false; }
-      else { label = '看视频获半价 (今日剩' + left + '次)'; enabled = left > 0 && !adBusy; }
+      if (halfNext) { label = '下次升级半价已激活'; enabled = false; } else if (!adOk) { label = '广告暂不可用'; enabled = false; } else if (discountFailed) { label = '广告暂不可用'; enabled = false; } else { label = '看视频获半价 (今日剩' + left + '次)'; enabled = left > 0 && !adBusy; }
       hud.drawBtn(ctx, dBtn, label, enabled);
       hud.drawBtn(ctx, buttons[4], '开始闯关');
 

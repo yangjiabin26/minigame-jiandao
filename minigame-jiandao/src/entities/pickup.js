@@ -23,8 +23,7 @@ function createPickups() {
       pool.forEach((c) => {
         const dx = player.x - c.x, dy = player.y - c.y;
         const d = Math.hypot(dx, dy);
-        if (d < MAGNET_R && d > 0) { c.vx = (dx / d) * 240; c.vy = (dy / d) * 240; }
-        else { c.vx *= Math.max(0, 1 - dt * 4); c.vy *= Math.max(0, 1 - dt * 4); }
+        if (d < MAGNET_R && d > 0) { c.vx = (dx / d) * 240; c.vy = (dy / d) * 240; } else { c.vx *= Math.max(0, 1 - dt * 4); c.vy *= Math.max(0, 1 - dt * 4); }
         c.x += c.vx * dt; c.y += c.vy * dt;
         if (circleHit(c.x, c.y, PICK_R, player.x, player.y, player.r)) {
           onCollect(c.value);

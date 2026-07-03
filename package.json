@@ -1,0 +1,13 @@
+{
+  "name": "douyin-minigame-tools",
+  "private": true,
+  "description": "仓库级开发工具（lint/test 入口）；游戏本体在 minigame-jiandao/，保持零运行时依赖",
+  "scripts": {
+    "lint": "eslint minigame-jiandao tools",
+    "test": "npm --prefix minigame-jiandao test"
+  },
+  "devDependencies": {
+    "@stylistic/eslint-plugin": "^5.0.0",
+    "eslint": "^9.0.0"
+  }
+}
