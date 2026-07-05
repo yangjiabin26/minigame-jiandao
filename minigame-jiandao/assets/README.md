@@ -39,8 +39,8 @@
 `'.mp3'` 后缀为 `'.wav'`（抖音小游戏 InnerAudioContext 同时支持
 mp3 与 wav 格式）。
 
-## 图形
+## 图形（assets/sprites.png + sprites.json）
 
-首版为程序绘制（Canvas 几何图形，色块骑士）。v1.1 计划接入 Kenney Tiny Dungeon
-精灵图（https://kenney.nl/assets/tiny-dungeon, CC0）。色块画面在 dev harness
-中验证可玩性已足够，替换精灵图不影响任何逻辑代码。
+由 `tools/gen_atlas.js` 从 `assets-src/` 的四张 AI 生成素材图（项目自有，v01_20260706）
+裁剪打包生成，44 帧。重新生成：仓库根执行 `npm install && node tools/gen_atlas.js`。
+裁剪坐标清单：`tools/sprite_manifest.js`。
