@@ -20,7 +20,7 @@ function charFrames(prefix, idleY, idleH, moveY, moveH, attackSpec) {
 
 const MANIFEST = [
   ...charFrames('player', 0.0387, 0.044, 0.0884, 0.044,
-    { nx: 0.375, ny: 0.1354, nw: 0.09, nh: 0.041 }),
+    { nx: 0.3909, ny: 0.1335, nw: 0.0525, nh: 0.0442 }),
   ...charFrames('soldier', 0.2698, 0.038, 0.3076, 0.038,
     { nx: 0.375, ny: 0.346, nw: 0.075, nh: 0.034 }),
   ...charFrames('archer', 0.4548, 0.032, 0.49, 0.032,
