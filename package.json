@@ -8,6 +8,7 @@
   },
   "devDependencies": {
     "@stylistic/eslint-plugin": "^5.0.0",
-    "eslint": "^9.0.0"
+    "eslint": "^9.0.0",
+    "pngjs": "^7.0.0"
   }
 }
