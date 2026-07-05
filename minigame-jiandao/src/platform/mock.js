@@ -1,6 +1,7 @@
 function createMockPlatform(opts = {}) {
   const mem = new Map();
   const handlers = { start: [], move: [], end: [] };
+  let imageLoadResult = opts.imageLoadResult !== false;
   return {
     name: 'mock',
     system: { width: opts.width || 375, height: opts.height || 667, pixelRatio: 1 },
@@ -26,12 +27,11 @@ function createMockPlatform(opts = {}) {
       emit(type, touches) { handlers[type].forEach((cb) => cb(touches)); },
     },
     createImage() {
-      const self = this;
       const img = {
         width: 1, height: 1, onload: null, onerror: null,
         set src(v) {
           this._src = v;
-          const ok = opts.imageLoadResult !== false;
+          const ok = imageLoadResult;
           setTimeout(() => { if (ok && img.onload) img.onload(); else if (!ok && img.onerror) img.onerror(); }, 0);
         },
         get src() { return this._src; },
@@ -42,6 +42,7 @@ function createMockPlatform(opts = {}) {
       const files = opts.files || {};
       return files[p] !== undefined ? files[p] : null;
     },
+    setImageLoadResult(v) { imageLoadResult = v; },
   };
 }
 module.exports = { createMockPlatform };

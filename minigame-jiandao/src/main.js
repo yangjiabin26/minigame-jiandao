@@ -4,6 +4,8 @@ const { createGameState } = require('./state');
 const { createInput } = require('./core/input');
 const { createLoop } = require('./core/loop');
 const { createSceneManager } = require('./core/scenes');
+const { createAtlas } = require('./core/images');
+const { createLoadingScene } = require('./scenes/loading');
 const { createMenuScene } = require('./scenes/menu');
 const { createLevelSelectScene } = require('./scenes/levelselect');
 const { createBattleScene } = require('./scenes/battle');
@@ -24,8 +26,9 @@ function start() {
   const gs = createGameState(createStore(platform.storage));
   const input = createInput(view.w, view.h);
   const sm = createSceneManager();
-  const deps = { platform, gs, input, view, go: (n, p) => sm.go(n, p) };
+  const deps = { platform, gs, input, view, atlas: createAtlas(platform), go: (n, p) => sm.go(n, p) };
 
+  sm.register('loading', createLoadingScene(deps));
   sm.register('menu', createMenuScene(deps));
   sm.register('levelselect', createLevelSelectScene(deps));
   sm.register('battle', createBattleScene(deps));
@@ -36,7 +39,7 @@ function start() {
   platform.touch.onEnd((ts) => input.onEnd(ts));
   platform.onError((e) => console.error('[jiandao]', e));
 
-  sm.go('menu');
+  sm.go('loading');
   const loop = createLoop((dt) => sm.update(dt), () => sm.render(ctx));
   loop.start();
   return { sm, gs };
