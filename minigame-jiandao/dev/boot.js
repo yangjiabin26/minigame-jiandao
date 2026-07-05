@@ -1,4 +1,5 @@
 // 极简同步 CommonJS 加载器：仅本地开发用
+/* global Image */
 (function () {
   const cache = {};
   function resolve(base, path) {
@@ -28,6 +29,19 @@
   const canvas = document.getElementById('game');
   const { createMockPlatform } = load('src/platform/mock.js');
   const platform = createMockPlatform({ canvas, width: 375, height: 667 });
+
+  // 浏览器真实资源实现：覆盖 mock 的 Node 假 readJson/createImage
+  platform.readJson = function (p) {
+    try {
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', p, false);
+      xhr.send();
+      return xhr.status === 200 ? JSON.parse(xhr.responseText) : null;
+    } catch (e) {
+      return null;
+    }
+  };
+  platform.createImage = function () { return new Image(); };
 
   // 把 mock 注入 platform/index 的缓存，让 main.js 拿到带 canvas 的实例
   const platformIndex = load('src/platform/index.js');
