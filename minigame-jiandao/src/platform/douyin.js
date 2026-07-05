@@ -8,6 +8,8 @@ function mapChanged(e) {
   return Array.from(e.changedTouches).map((t) => ({ id: t.identifier, x: t.clientX, y: t.clientY }));
 }
 
+let mainCanvas = null;
+
 function createDouyinPlatform() {
   const info = tt.getSystemInfoSync();
   let rewarded = null;
@@ -15,7 +17,7 @@ function createDouyinPlatform() {
   return {
     name: 'douyin',
     system: { width: info.windowWidth, height: info.windowHeight, pixelRatio: info.pixelRatio },
-    createCanvas() { return tt.createCanvas(); },
+    createCanvas() { mainCanvas = mainCanvas || tt.createCanvas(); return mainCanvas; },
     storage: {
       get(k) { try { const v = tt.getStorageSync(k); return v === '' ? null : v; } catch (e) { return null; } },
       set(k, v) { try { tt.setStorageSync(k, v); } catch (e) {} },
@@ -59,6 +61,10 @@ function createDouyinPlatform() {
       onStart(cb) { tt.onTouchStart((e) => cb(mapChanged(e))); },
       onMove(cb) { tt.onTouchMove((e) => cb(mapTouches(e))); },
       onEnd(cb) { tt.onTouchEnd((e) => cb(mapChanged(e))); },
+    },
+    createImage() { return (mainCanvas || (mainCanvas = tt.createCanvas())).createImage(); },
+    readJson(p) {
+      try { return JSON.parse(tt.getFileSystemManager().readFileSync(p, 'utf8')); } catch (e) { return null; }
     },
   };
 }

@@ -25,6 +25,23 @@ function createMockPlatform(opts = {}) {
       onEnd(cb) { handlers.end.push(cb); },
       emit(type, touches) { handlers[type].forEach((cb) => cb(touches)); },
     },
+    createImage() {
+      const self = this;
+      const img = {
+        width: 1, height: 1, onload: null, onerror: null,
+        set src(v) {
+          this._src = v;
+          const ok = opts.imageLoadResult !== false;
+          setTimeout(() => { if (ok && img.onload) img.onload(); else if (!ok && img.onerror) img.onerror(); }, 0);
+        },
+        get src() { return this._src; },
+      };
+      return img;
+    },
+    readJson(p) {
+      const files = opts.files || {};
+      return files[p] !== undefined ? files[p] : null;
+    },
   };
 }
 module.exports = { createMockPlatform };
