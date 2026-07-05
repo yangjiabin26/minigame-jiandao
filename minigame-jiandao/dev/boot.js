@@ -84,5 +84,10 @@
     platform.touch.emit('end', [{ id: 300, x: e.clientX - r.left, y: e.clientY - r.top }]);
   });
 
+  // 隐藏标签页时浏览器暂停 RAF；dev 退化为 setTimeout 驱动，保证自动化/后台验收可用
+  const origRaf = window.requestAnimationFrame.bind(window);
+  window.requestAnimationFrame = (cb) =>
+    (document.hidden ? setTimeout(() => cb(performance.now()), 16) : origRaf(cb));
+
   load('src/main.js').start();
 })();
