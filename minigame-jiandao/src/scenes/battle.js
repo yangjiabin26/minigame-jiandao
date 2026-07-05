@@ -26,6 +26,23 @@ function resolveSwing(swing, player, enemies) {
   return kills;
 }
 
+// 状态→图集帧名。kind: 'player'|敌人type|Boss kind；state: 实体状态或 'swing'(玩家攻击中)
+function frameFor(kind, state, moving, animTick) {
+  const isBoss = kind === 'warlord' || kind === 'blackknight';
+  if (kind === 'player') {
+    if (state === 'swing') return 'player_attack_0';
+    return moving ? 'player_move_' + (animTick % 2) : 'player_idle_0';
+  }
+  if (isBoss) {
+    if (state === 'telegraph') return kind + '_telegraph_0';
+    if (state === 'strike') return kind + '_attack_0';
+    return moving ? kind + '_move_0' : kind + '_idle_0';
+  }
+  if (state === 'windup' || state === 'recover') return kind + '_attack_0';
+  if (state === 'chase') return kind + '_move_' + (animTick % 2);
+  return kind + '_idle_0';
+}
+
 function createBattleScene(deps) {
   const { platform, gs, input, view, go } = deps;
   let s = null; // 每次 enter 重建的局内状态
@@ -66,6 +83,7 @@ function createBattleScene(deps) {
         pickups: createPickups(),
         camera: createCamera(view.w, view.h),
         earned: 0, reviveUsed: false, reviveFailed: false, phase: 'playing', adBusy: false,
+        animT: 0, animTick: 0,
         deadButtons: [
           { id: 'revive', x: view.w / 2 - 110, y: view.h / 2, w: 220, h: 52 },
           { id: 'giveup', x: view.w / 2 - 110, y: view.h / 2 + 70, w: 220, h: 44 },
@@ -78,6 +96,8 @@ function createBattleScene(deps) {
 
     update(dt) {
       if (!s || s.phase !== 'playing') return;
+      s.animT += dt;
+      s.animTick = Math.floor(s.animT * 6);
       const { player, enemies, cfg } = s;
       const world = {
         player, walls: cfg.obstacles, mapW: cfg.w, mapH: cfg.h,
@@ -178,26 +198,75 @@ function createBattleScene(deps) {
     render(ctx) {
       if (!s) return;
       const { cfg, player } = s;
+      const atlas = deps.atlas;
       const ox = s.camera.ox(), oy = s.camera.oy();
+
+      // 地板：图集平铺，回退纯色
       ctx.fillStyle = THEME_BG[cfg.theme];
       ctx.fillRect(0, 0, view.w, view.h);
       ctx.save();
       ctx.translate(-ox, -oy);
+      if (atlas.ready) {
+        const T = 64;
+        const x0 = Math.floor(ox / T) * T, y0 = Math.floor(oy / T) * T;
+        for (let ty = y0; ty < oy + view.h; ty += T) {
+          for (let tx = x0; tx < ox + view.w; tx += T) {
+            atlas.draw(ctx, 'floor_' + cfg.theme, tx + T / 2, ty + T / 2, T);
+          }
+        }
+      }
 
-      // 障碍
-      ctx.fillStyle = '#3a3226';
-      for (const o of cfg.obstacles) ctx.fillRect(o.x, o.y, o.w, o.h);
+      // 墙体：图集平铺，回退深色矩形
+      for (const o of cfg.obstacles) {
+        let drawn = false;
+        if (atlas.ready) {
+          drawn = true;
+          const T = 64;
+          for (let ty = o.y; ty < o.y + o.h; ty += T) {
+            for (let tx = o.x; tx < o.x + o.w; tx += T) {
+              const w = Math.min(T, o.x + o.w - tx), h = Math.min(T, o.y + o.h - ty);
+              ctx.save();
+              ctx.beginPath(); ctx.rect(tx, ty, w, h); ctx.clip();
+              atlas.draw(ctx, 'wall_' + cfg.theme, tx + T / 2, ty + T / 2, T);
+              ctx.restore();
+            }
+          }
+        }
+        if (!drawn) { ctx.fillStyle = '#3a3226'; ctx.fillRect(o.x, o.y, o.w, o.h); }
+      }
+
       // 出口
-      ctx.fillStyle = s.level.exitOpen() ? '#f1c40f' : '#333';
-      ctx.beginPath(); ctx.arc(cfg.exit.x, cfg.exit.y, EXIT_R, 0, Math.PI * 2); ctx.fill();
+      if (s.level.exitOpen()) {
+        if (!atlas.draw(ctx, 'portal_' + cfg.theme, cfg.exit.x, cfg.exit.y, 56)) {
+          ctx.fillStyle = '#f1c40f';
+          ctx.beginPath(); ctx.arc(cfg.exit.x, cfg.exit.y, EXIT_R, 0, Math.PI * 2); ctx.fill();
+        }
+      } else {
+        ctx.fillStyle = '#333';
+        ctx.beginPath(); ctx.arc(cfg.exit.x, cfg.exit.y, EXIT_R, 0, Math.PI * 2); ctx.fill();
+      }
 
       // 金币与箭
-      ctx.fillStyle = '#f39c12';
-      s.pickups.forEach((c) => { ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, Math.PI * 2); ctx.fill(); });
-      ctx.fillStyle = '#ecf0f1';
-      s.projectiles.forEach((a) => { ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill(); });
+      s.pickups.forEach((c) => {
+        if (!atlas.draw(ctx, 'coin_0', c.x, c.y, 16)) {
+          ctx.fillStyle = '#f39c12';
+          ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, Math.PI * 2); ctx.fill();
+        }
+      });
+      s.projectiles.forEach((a) => {
+        let drawn = false;
+        if (atlas.ready) {
+          ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(a.dir);
+          drawn = atlas.draw(ctx, 'arrow_0', 0, 0, 20);
+          ctx.restore();
+        }
+        if (!drawn) {
+          ctx.fillStyle = '#ecf0f1';
+          ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2); ctx.fill();
+        }
+      });
 
-      // 敌人（含前摇提示）
+      // 敌人与Boss（前摇圈与血条保持叠加）
       const COLORS = { soldier: '#b03a2e', archer: '#9b59b6', shield: '#7f8c8d', berserker: '#d35400' };
       for (const en of s.enemies) {
         if (en.dead) continue;
@@ -206,38 +275,58 @@ function createBattleScene(deps) {
           ctx.beginPath(); ctx.arc(en.x, en.y, en.r + 20, 0, Math.PI * 2); ctx.fill();
           ctx.globalAlpha = 1;
         }
-        ctx.fillStyle = en.kind ? '#2c3e50' : COLORS[en.type];
-        ctx.beginPath(); ctx.arc(en.x, en.y, en.r, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(en.x, en.y);
-        ctx.lineTo(en.x + Math.cos(en.facing) * en.r, en.y + Math.sin(en.facing) * en.r); ctx.stroke();
-        hud.drawBar(ctx, en.x - 16, en.y - en.r - 10, 32, 4, en.hp / en.maxHp, '#e74c3c', '#222');
+        const kind = en.kind || en.type;
+        const moving = en.state === 'chase' || (en.kind && en.state === 'idle');
+        const name = frameFor(kind, en.state, moving, s.animTick || 0);
+        const destH = en.kind ? 64 : 44;
+        if (!atlas.draw(ctx, name, en.x, en.y - destH * 0.15, destH, { flipX: Math.cos(en.facing) < 0 })) {
+          ctx.fillStyle = en.kind ? '#2c3e50' : COLORS[en.type];
+          ctx.beginPath(); ctx.arc(en.x, en.y, en.r, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#111'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(en.x, en.y);
+          ctx.lineTo(en.x + Math.cos(en.facing) * en.r, en.y + Math.sin(en.facing) * en.r); ctx.stroke();
+        }
+        hud.drawBar(ctx, en.x - 16, en.y - (en.kind ? 44 : 34), 32, 4, en.hp / en.maxHp, '#e74c3c', '#222');
       }
 
-      // 玩家（无敌闪烁）
+      // 玩家（无敌闪烁保持）
       if (player.invulnT <= 0 || Math.floor(player.invulnT * 12) % 2 === 0) {
-        ctx.fillStyle = '#2980b9';
-        ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.moveTo(player.x, player.y);
-        ctx.lineTo(player.x + Math.cos(player.facing) * 20, player.y + Math.sin(player.facing) * 20); ctx.stroke();
+        const moving = !!(input.joy && input.joy.mag > 0);
+        const pname = frameFor('player', player.swing ? 'swing' : null, moving, s.animTick || 0);
+        if (!atlas.draw(ctx, pname, player.x, player.y - 7, 44, { flipX: Math.cos(player.facing) < 0 })) {
+          ctx.fillStyle = '#2980b9';
+          ctx.beginPath(); ctx.arc(player.x, player.y, player.r, 0, Math.PI * 2); ctx.fill();
+          ctx.strokeStyle = '#fff'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(player.x, player.y);
+          ctx.lineTo(player.x + Math.cos(player.facing) * 20, player.y + Math.sin(player.facing) * 20); ctx.stroke();
+        }
       }
-      // 挥剑弧线
+      // 挥剑：精灵弧优先，回退白色扇形
       if (player.swing) {
-        ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff';
-        ctx.beginPath(); ctx.moveTo(player.x, player.y);
-        ctx.arc(player.x, player.y, player.swing.radius,
-          player.swing.dir - player.swing.halfAngle, player.swing.dir + player.swing.halfAngle);
-        ctx.fill(); ctx.globalAlpha = 1;
+        let drawn = false;
+        if (atlas.ready) {
+          ctx.save();
+          ctx.translate(player.x + Math.cos(player.swing.dir) * 40, player.y + Math.sin(player.swing.dir) * 40);
+          ctx.rotate(player.swing.dir);
+          drawn = atlas.draw(ctx, 'slash_' + (player.swing.stage % 2), 0, 0, 56);
+          ctx.restore();
+        }
+        if (!drawn) {
+          ctx.globalAlpha = 0.5; ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.moveTo(player.x, player.y);
+          ctx.arc(player.x, player.y, player.swing.radius,
+            player.swing.dir - player.swing.halfAngle, player.swing.dir + player.swing.halfAngle);
+          ctx.fill(); ctx.globalAlpha = 1;
+        }
       }
       ctx.restore();
 
-      // HUD
+      // HUD（与现状相同，摇杆/按钮改传 atlas）
       hud.drawBar(ctx, 16, 20, 140, 14, player.hp / player.maxHp, '#27ae60', '#222');
       hud.drawTextC(ctx, '金币 ' + gs.data.coins, view.w - 70, 27, 14, '#f1c40f');
       hud.drawTextC(ctx, '第 ' + (s.levelIndex + 1) + ' 关', view.w / 2, 27, 14, '#fff');
-      hud.drawJoystick(ctx, input.joy);
-      hud.drawActionButtons(ctx, input.buttons, player.dashCdLeft <= 0);
+      hud.drawJoystick(ctx, input.joy, atlas);
+      hud.drawActionButtons(ctx, input.buttons, player.dashCdLeft <= 0, atlas);
 
       if (s.phase === 'dead') {
         ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(0, 0, view.w, view.h);
@@ -248,4 +337,4 @@ function createBattleScene(deps) {
     },
   };
 }
-module.exports = { createBattleScene, resolveSwing };
+module.exports = { createBattleScene, resolveSwing, frameFor };
