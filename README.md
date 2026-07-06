@@ -2,7 +2,7 @@
 
 > 一款抖音小游戏：2D 顶视角动作闯关。扮演身披重甲的骑士，穿越山谷、森林与城堡，升级武器与盔甲，击败黑骑士，铸就冠军之路。
 
-**原生 JavaScript + Canvas 2D，零运行时依赖，零引擎。** 81 个单元测试覆盖全部核心逻辑，可在浏览器中直接试玩。
+**原生 JavaScript + Canvas 2D，零运行时依赖，零引擎。** 92 个单元测试覆盖全部核心逻辑，可在浏览器中直接试玩。
 
 - 分类：动作 / H5 / 战士 / 闯关（适龄提示 16+）
 - 平台：[抖音小游戏](https://developer.open-douyin.com/)（微信小游戏可低成本移植——所有平台 API 隔离在一个文件里）
@@ -45,7 +45,7 @@ python3 -m http.server 8080
 
 ```bash
 npm install        # 仅安装 dev 工具（ESLint）；游戏本体零依赖
-npm test           # 81 个单元测试（Node ≥ 18，内置 node:test，无测试框架依赖）
+npm test           # 92 个单元测试（Node ≥ 18，内置 node:test，无测试框架依赖）
 npm run lint       # ESLint（Google Style 近似配置）
 ```
 
