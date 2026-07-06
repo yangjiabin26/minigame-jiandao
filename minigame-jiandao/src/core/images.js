@@ -8,10 +8,15 @@ function createAtlas(platform) {
       if (!json || !json.frames) return Promise.resolve(false);
       frames = json.frames;
       return new Promise((resolve) => {
-        img = platform.createImage();
-        img.onload = () => { ready = true; resolve(true); };
-        img.onerror = () => { ready = false; resolve(false); };
-        img.src = basePath + '.png';
+        try {
+          img = platform.createImage();
+          img.onload = () => { ready = true; resolve(true); };
+          img.onerror = () => { ready = false; resolve(false); };
+          img.src = basePath + '.png';
+        } catch (e) {
+          ready = false;
+          resolve(false);
+        }
       });
     },
     // 以 (cx,cy) 为中心绘制帧，高 destH，宽按帧宽高比。失败返回 false，调用方走色块回退。

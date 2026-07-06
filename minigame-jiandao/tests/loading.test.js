@@ -49,3 +49,15 @@ test('重试3次仍失败则降级进入主菜单（色块可玩）', async () =
   assert.deepStrictEqual(gone, ['menu']);
   assert.ok(!deps.atlas.ready);
 });
+
+test('createImage 抛异常也走降级：重试超限后进入主菜单', async () => {
+  const { deps, gone } = makeDeps({ 'assets/sprites.json': JSON_BODY }, true);
+  deps.platform.createImage = () => { throw new Error('no createImage on this runtime'); };
+  const scene = createLoadingScene(deps);
+  scene.enter();
+  await tick();
+  assert.deepStrictEqual(gone, []); // 第一次失败停在加载页
+  for (let i = 0; i < 3; i++) { scene.onTap(375 / 2, 667 / 2 + 40); await tick(); }
+  assert.deepStrictEqual(gone, ['menu']); // 超限降级
+  assert.ok(!deps.atlas.ready);
+});

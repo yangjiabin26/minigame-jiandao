@@ -14,7 +14,12 @@ function createLoadingScene(deps) {
       tries += 1;
       if (ok || tries > MAX_RETRY) { go('menu'); return; } // 超限降级进菜单（色块回退）
       failed = true;
-    }).catch(() => { busy = false; tries += 1; failed = true; });
+    }).catch(() => {
+      busy = false;
+      tries += 1;
+      if (tries > MAX_RETRY) { go('menu'); return; } // 与成功路径同样的降级保底
+      failed = true;
+    });
   }
 
   return {

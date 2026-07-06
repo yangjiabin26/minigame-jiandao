@@ -6,6 +6,7 @@
 - [ ] 模拟器验证：五步检查（主菜单/选关/战斗操作/结算翻倍/死亡复活，与 dev harness 清单相同，但用鼠标模拟触摸）
 - [ ] 性能面板：战斗场景 FPS ≥ 30（目标 60）
 - [ ] 真机预览：扫码在抖音 App 内试玩，验收摇杆手感、按钮大小、音效播放
+- [ ] 真机验证图集运行时 API：canvas.createImage() 与 readFileSync('assets/sprites.json') 均可用（失败时应显示加载重试页并可降级进入主菜单）
 
 ## B. 账号与资质（可与开发并行）
 - [ ] 注册抖音开放平台账号（个人主体）：https://developer.open-douyin.com/ → 实名认证

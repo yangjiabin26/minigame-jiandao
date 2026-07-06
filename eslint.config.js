@@ -58,7 +58,7 @@ module.exports = [
       globals: {
         ...base.languageOptions.globals,
         window: 'readonly', document: 'readonly', XMLHttpRequest: 'readonly',
-        MouseEvent: 'readonly', KeyboardEvent: 'readonly',
+        MouseEvent: 'readonly', KeyboardEvent: 'readonly', performance: 'readonly',
       },
     },
   },
